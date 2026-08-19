@@ -88,6 +88,11 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
             value={draft}
             onChange={(e) => { setDraft(e.target.value) }}
             onKeyDown={(e) => {
+              // keyCode 229 is the legacy IME-composition signal engines emit
+              // without isComposing; the Enter that commits a composition must
+              // save, not submit (same guard as QuestionComposer/InputBar).
+              // oxlint-disable-next-line typescript/no-deprecated
+              if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return
               if (e.key === 'Enter') void handleEdit()
               if (e.key === 'Escape') setEditing(false)
             }}

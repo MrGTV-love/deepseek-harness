@@ -80,6 +80,12 @@ export function PopupSelectView({ popup, t }: PopupSelectViewProps) {
   const confirmation = state.confirming?.confirmation
 
   const onKeyDown = (ev: React.KeyboardEvent<HTMLDivElement>): void => {
+    // IME guard: while the search input composes, every key belongs to the
+    // IME — Enter commits the composition and the arrows walk candidates —
+    // so none may drive the popup list. keyCode 229 is the legacy
+    // composition signal engines emit without isComposing.
+    // oxlint-disable-next-line typescript/no-deprecated
+    if (ev.nativeEvent.isComposing || ev.nativeEvent.keyCode === 229) return
     // ArrowLeft/ArrowRight fall through on purpose: the search input keeps
     // its native caret movement.
     switch (ev.key) {

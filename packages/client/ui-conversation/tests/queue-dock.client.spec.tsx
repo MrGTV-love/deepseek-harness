@@ -275,6 +275,11 @@ describe('QueueDock', () => {
     expect(getByLabelText('保存排队消息')).toHaveProperty('disabled', true)
     fireEvent.change(editor, { target: { value: '输入中' } })
     fireEvent.keyDown(editor, { key: 'Enter', isComposing: true })
+    // The legacy signal: engines that omit isComposing mark the composition
+    // keydown with keyCode 229; Escape mid-composition cancels the
+    // composition, not the editor.
+    fireEvent.keyDown(editor, { key: 'Enter', keyCode: 229 })
+    fireEvent.keyDown(editor, { key: 'Escape', isComposing: true })
     expect(updateQueue).not.toHaveBeenCalled()
     expect(getByLabelText('编辑排队消息')).toBeTruthy()
   })

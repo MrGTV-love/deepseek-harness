@@ -108,11 +108,18 @@ export function QueueDock({ useSession, updateQueue, notify, t }: QueueDockProps
                     value={editing.text}
                     onChange={(event) => { setEditing({ id: row.id, text: event.currentTarget.value }) }}
                     onKeyDown={(event) => {
+                      // IME guard: the composition-confirming Enter must save
+                      // nothing, and Escape mid-composition belongs to the IME
+                      // (it cancels the composition, not the editor). keyCode
+                      // 229 is the legacy composition signal some engines emit
+                      // without isComposing.
+                      // oxlint-disable-next-line typescript/no-deprecated
+                      if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return
                       if (event.key === 'Escape') {
                         setEditing(null)
                         return
                       }
-                      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+                      if (event.key === 'Enter') {
                         event.preventDefault()
                         void saveEdit()
                       }

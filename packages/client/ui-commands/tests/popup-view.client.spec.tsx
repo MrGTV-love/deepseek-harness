@@ -149,6 +149,18 @@ describe('PopupSelectView', () => {
     expect(view.container.childElementCount).toBe(0)
   })
 
+  it('composition Enter commits the IME, never the selection', async () => {
+    const seen: SelectOption[] = []
+    const { search } = await mountOpen({ onSelect: (option) => { seen.push(option) } })
+    // The Enter that confirms a composition carries isComposing (or the
+    // legacy keyCode 229 on engines that omit the flag); the popup must
+    // leave both to the IME and keep its list alive.
+    act(() => { fireEvent.keyDown(search, { key: 'Enter', isComposing: true }) })
+    act(() => { fireEvent.keyDown(search, { key: 'Enter', keyCode: 229 }) })
+    expect(seen).toEqual([])
+    expect(screen.getAllByRole('option')).toBeTruthy()
+  })
+
   it('click selects a row; mouseenter moves the highlight', async () => {
     const seen: SelectOption[] = []
     const { view } = await mountOpen({ onSelect: (option) => { seen.push(option) } })
