@@ -1,7 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" translate="no">
   <head>
     <meta charset="utf-8" />
+    <!-- DOM translators (Chrome built-in translate, immersive-translate, ...)
+         rewrite text nodes inside React-managed elements; React's next
+         deletion commit then throws NotFoundError: removeChild, which kills
+         the enclosing slot entry until refresh. The app ships its own zh/en
+         locale switcher, so page-level translation is refused outright. -->
+    <meta name="google" content="notranslate" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

@@ -39,3 +39,31 @@ select,
 textarea {
   font-family: inherit;
 }
+
+/* Slot crash face (web-react scoped-slots): an entry whose render threw is
+   contained by its per-entry boundary and renders an empty
+   <div data-slot-error="slot-key"> in its place. Without this rule that div
+   is invisible and takes no space — a crashed composer reads as "the input
+   vanished" until refresh. Fail visible instead: a dashed error outline, a
+   minimum touch height, and a non-interactive warning marker. The glyph
+   rides a ::before pseudo-element (translators rewrite text nodes, never
+   pseudo content), so the marker itself cannot be corrupted. */
+[data-slot-error] {
+  min-height: 28px;
+  outline: 1px dashed var(--dsw-alias-state-error-primary, #f53f3f);
+  outline-offset: -1px;
+  border-radius: 8px;
+  position: relative;
+}
+
+[data-slot-error]::before {
+  content: '⚠';
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-state-error-primary, #f53f3f);
+  pointer-events: none;
+  user-select: none;
+}

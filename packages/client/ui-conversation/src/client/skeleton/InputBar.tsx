@@ -650,7 +650,13 @@ export function InputBar({
             offset the browser applies to both layers at once, never a JS mirror between two boxes,
             which a compositor-driven gesture outruns and leaves the words trailing the caret. */}
         <div ref={scrollRef} className={css.scroll} data-input-scroll>
-          <div className={css.grow}>
+          {/* translate="no": DOM translators rewrite bare text nodes (the
+              backdrop and mirror are raw draft text), and React's next
+              deletion commit over a rewritten node throws
+              NotFoundError: removeChild — which kills this whole slot entry
+              until refresh. The draft is user-authored text, never a
+              translation subject. */}
+          <div className={css.grow} translate="no">
             <div
               aria-hidden
               className={clsx(css.backdrop, textareaDisabled && css.backdropDisabled)}
