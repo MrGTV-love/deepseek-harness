@@ -1068,6 +1068,9 @@ describe('WorkspaceBrowser', () => {
     fireEvent.keyDown(input, { key: 'Enter' })
     expect(renameWorkspace).not.toHaveBeenCalled()
     fireEvent.change(input, { target: { value: 'Renamed' } })
+    // The legacy IME-composition Enter (keyCode 229) must not submit.
+    fireEvent.keyDown(input, { key: 'Enter', keyCode: 229 })
+    expect(renameWorkspace).not.toHaveBeenCalled()
     fireEvent.keyDown(input, { key: 'a' })
     fireEvent.keyDown(input, { key: 'Enter' })
     expect(renameWorkspace).toHaveBeenCalledWith(wid('alpha'), 'Renamed')
@@ -1077,6 +1080,25 @@ describe('WorkspaceBrowser', () => {
     expect(screen.queryByRole('alert')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '取消' }))
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('rename Enter stays guarded through the Safari composition ordering', async () => {
+    const renameWorkspace = vi.fn(async () => {})
+    mount({
+      useWorkspaces: hook(workspaceState([workspace('alpha', [], 'Alpha')])),
+      renameWorkspace,
+    })
+    fireEvent.click(screen.getByRole('button', { name: '工作区“Alpha”的操作' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: '重命名' }))
+    const input = screen.getByLabelText<HTMLInputElement>('工作区名称')
+    fireEvent.change(input, { target: { value: 'Renamed' } })
+    fireEvent.compositionStart(input)
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true })
+    fireEvent.compositionEnd(input)
+    // Safari delivers the composition-confirming keydown AFTER
+    // compositionend; the deferred clear keeps the guard armed for it.
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(renameWorkspace).not.toHaveBeenCalled()
   })
 
   it('reports non-Error rename failures as text', async () => {

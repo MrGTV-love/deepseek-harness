@@ -802,6 +802,10 @@ export function WorkspaceBrowser({
   // states; the menu anchors on this button).
   const [wsPickerOpen, setWsPickerOpen] = useState(false)
   const wsPlusRef = useRef<HTMLButtonElement>(null)
+  // Shared by both rename inputs: the composition flag arms on
+  // compositionstart and clears one tick AFTER compositionend, because
+  // Safari delivers the composition-confirming keydown after the
+  // compositionend event (the guard must stay armed for it).
   const composingRef = useRef(false)
 
   // Rail search = expand + land in the search box: the flag arms before the
@@ -1198,9 +1202,10 @@ export function WorkspaceBrowser({
           onFocus={(e) => { e.target.select() }}
           onChange={(e) => { setRenameDraft(e.target.value); setRenameError(null) }}
           onCompositionStart={() => { composingRef.current = true }}
-          onCompositionEnd={() => { composingRef.current = false }}
+          onCompositionEnd={() => { setTimeout(() => { composingRef.current = false }, 10) }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !composingRef.current) {
+            // oxlint-disable-next-line typescript/no-deprecated
+            if (e.key === 'Enter' && !composingRef.current && e.nativeEvent.keyCode !== 229) {
               e.preventDefault()
               confirmRename()
             }
@@ -1233,9 +1238,10 @@ export function WorkspaceBrowser({
           onFocus={(e) => { e.target.select() }}
           onChange={(e) => { setSessionRenameDraft(e.target.value); setSessionRenameError(null) }}
           onCompositionStart={() => { composingRef.current = true }}
-          onCompositionEnd={() => { composingRef.current = false }}
+          onCompositionEnd={() => { setTimeout(() => { composingRef.current = false }, 10) }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !composingRef.current) {
+            // oxlint-disable-next-line typescript/no-deprecated
+            if (e.key === 'Enter' && !composingRef.current && e.nativeEvent.keyCode !== 229) {
               e.preventDefault()
               confirmSessionRename()
             }

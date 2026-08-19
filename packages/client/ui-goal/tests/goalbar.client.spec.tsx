@@ -131,6 +131,23 @@ describe('GoalBar', () => {
     expect(screen.getByRole('textbox', { name: '目标内容' })).toBeTruthy()
   })
 
+  it('the IME-composition Enter commits the composition, never the save', () => {
+    const actions = makeActions()
+    render(<GoalBar goal={makeGoal()} {...actions} t={t} />)
+    fireEvent.click(screen.getByRole('button', { name: '编辑目标' }))
+    const box = screen.getByRole('textbox', { name: '目标内容' })
+    fireEvent.change(box, { target: { value: '发布' } })
+    // The Enter that confirms a pinyin composition carries isComposing (or
+    // the legacy keyCode 229 on engines that omit the flag); it must reach
+    // the IME, not onEdit.
+    fireEvent.keyDown(box, { key: 'Enter', isComposing: true })
+    fireEvent.keyDown(box, { key: 'Enter', keyCode: 229 })
+    expect(actions.onEdit).not.toHaveBeenCalled()
+    expect(screen.getByRole('textbox', { name: '目标内容' })).toBeTruthy()
+    fireEvent.keyDown(box, { key: 'Enter' })
+    expect(actions.onEdit).toHaveBeenCalledTimes(1)
+  })
+
   it('active goal: the pause action pauses', () => {
     const actions = makeActions()
     render(<GoalBar goal={makeGoal()} {...actions} t={t} />)

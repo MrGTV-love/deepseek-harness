@@ -246,6 +246,16 @@ describe('DirectoryBrowser', () => {
     expect(columns()).toHaveLength(1)
   })
 
+  it('the legacy IME-composition Enter (keyCode 229) never submits the path editor', async () => {
+    const b = mount()
+    await waitFor(() => { expect(screen.getByRole('listitem')).toBeTruthy() })
+    fireEvent.click(screen.getByRole('button', { name: 'browser.editPath' }))
+    const editor = screen.getByLabelText<HTMLInputElement>('browser.editPath')
+    fireEvent.change(editor, { target: { value: '/tmp' } })
+    fireEvent.keyDown(editor, { key: 'Enter', keyCode: 229 })
+    expect(b.listDirectory).not.toHaveBeenCalledWith('/tmp', expect.anything())
+  })
+
   it('lands the target single-pane at the wait bound, aborts a superseded parent leg on the wire, and drops its late resolution', async () => {
     vi.useFakeTimers()
     try {
@@ -1327,6 +1337,12 @@ describe('DirectoryBrowser', () => {
     fireEvent.keyDown(pathInput, { key: 'Enter' })
     expect(b.listDirectory.mock.calls.length).toBe(listCalls)
     fireEvent.compositionEnd(pathInput)
+    // The deferred clear keeps the guard armed one tick past compositionend
+    // (Safari delivers the composition-confirming keydown AFTER the event);
+    // an Enter inside that window still belongs to the IME.
+    fireEvent.keyDown(pathInput, { key: 'Enter' })
+    expect(b.listDirectory.mock.calls.length).toBe(listCalls)
+    await act(async () => { await new Promise((resolve) => { setTimeout(resolve, 15) }) })
     fireEvent.keyDown(pathInput, { key: 'Enter' })
     await waitFor(() => { expect(b.listDirectory).toHaveBeenLastCalledWith(DOCS, expect.any(AbortSignal)) })
     // Create dialog: same guard.
@@ -1337,6 +1353,9 @@ describe('DirectoryBrowser', () => {
     fireEvent.keyDown(nameInput, { key: 'Enter' })
     expect(b.createDirectory).not.toHaveBeenCalled()
     fireEvent.compositionEnd(nameInput)
+    fireEvent.keyDown(nameInput, { key: 'Enter' })
+    expect(b.createDirectory).not.toHaveBeenCalled()
+    await act(async () => { await new Promise((resolve) => { setTimeout(resolve, 15) }) })
     fireEvent.keyDown(nameInput, { key: 'Enter' })
     await waitFor(() => { expect(b.createDirectory).toHaveBeenCalledWith(DOCS, '新建') })
   })

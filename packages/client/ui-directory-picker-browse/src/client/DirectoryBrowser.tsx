@@ -307,7 +307,9 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
   }, [])
   const compositionGuard = {
     onCompositionStart: () => { composingRef.current = true },
-    onCompositionEnd: () => { composingRef.current = false },
+    // Deferred clear: Safari delivers the composition-confirming keydown
+    // AFTER compositionend, so the guard stays armed one tick past the event.
+    onCompositionEnd: () => { setTimeout(() => { composingRef.current = false }, 10) },
   }
 
   /** Newer intent wins: invalidate the pending listing's settlement AND abort its wire request. */
@@ -890,7 +892,8 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
                   // wrapper above (they must work after focus Tabs onto the
                   // rows); this handler owns only submission.
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' && !composingRef.current) {
+                    // oxlint-disable-next-line typescript/no-deprecated
+                    if (event.key === 'Enter' && !composingRef.current && event.nativeEvent.keyCode !== 229) {
                       event.preventDefault()
                       // Trim only detects a blank draft; the Host gets the
                       // original text — a real directory name may end in
@@ -1014,7 +1017,8 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
             onChange={(event) => { setFolderDraft(event.target.value) }}
             {...compositionGuard}
             onKeyDown={(event) => {
-              if (event.key === 'Enter' && !composingRef.current) {
+              // oxlint-disable-next-line typescript/no-deprecated
+              if (event.key === 'Enter' && !composingRef.current && event.nativeEvent.keyCode !== 229) {
                 event.preventDefault()
                 confirmCreate()
               }
